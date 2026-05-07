@@ -1,0 +1,35 @@
+schema_version: "1"
+name: hero
+version: "1.0.0"
+category: opening
+serves:
+  - attention
+description: 开篇主视觉卡片 — 替代普通 H1 标题，适配观点文、产品发布
+when_to_use: 文章开篇第一屏，替代普通H1标题。适合观点文、产品发布、重大宣布。
+when_not_to_use: 数据报告开头用 metrics；一篇文章只用一个 hero
+anti_pattern: |
+  title 写成描述句子而不是判断句
+  subtitle 过长抢了 title 的风头
+  一篇文章放两个 hero
+fields:
+  required:
+    - name: eyebrow
+      description: 标签词，如"深度观察"、"行业警告"
+      example: "深度观察"
+    - name: title
+      description: 主标题，必须是一句判断或承诺
+      example: "公众号排版的真问题"
+  optional:
+    - name: subtitle
+      description: 副标题，对主标题补充
+      example: "不是好不好看，是读者有没有理由读下去"
+    - name: cta_text
+      description: 开篇钩子文案
+      example: "↓ 3 分钟读完，给你一个判断"
+example: |
+  :::block hero
+  eyebrow: 深度观察
+  title: 公众号排版的真问题
+  subtitle: 不是好不好看，是读者有没有理由读下去
+  cta_text: ↓ 3 分钟，一个判断
+  :::

@@ -1,0 +1,21 @@
+schema_version: "1"
+name: toc
+version: "1.0.0"
+category: opening
+serves:
+  - readability
+description: 阅读导航 — 文章超过 1500 字或有 3 个以上章节时使用
+when_to_use: 文章超过 1500 字、有 3 个以上章节时，放在 hero 之后。
+when_not_to_use: 短文或单主题文章不需要导航
+fields:
+  required: []
+  optional:
+    - name: rows
+      description: "导航条目，格式: `序号 | 章节名 | 一句话说明`"
+      example: "01 | 问题定义 | 为什么排版让读者离开"
+example: |
+  :::block toc
+  01 | 现象 | 读者为什么没有理由读你的文章
+  02 | 本质 | 排版要解决的 4 件事
+  03 | 行动 | 今天就能上手的 3 个模块
+  :::

@@ -1,0 +1,38 @@
+<!-- callout 提示模块 — Claude 风格：克制色调 + 微妙背景 -->
+{% set type = type or "tip" %}
+{% set body = body or "" %}
+{% set style_map = {
+    "tip":      {"bg": "#FBF4EF", "border": "#C96442", "icon": "💡", "label": "提示"},
+    "info":     {"bg": "#F0F4F8", "border": "#5B7B9A", "icon": "ℹ️", "label": "信息"},
+    "warning":  {"bg": "#FDF6EC", "border": "#B8860B", "icon": "⚠️", "label": "注意"},
+    "success":  {"bg": "#F0F7F0", "border": "#5D8A5D", "icon": "✓",  "label": "成功"},
+    "danger":   {"bg": "#FDF0EF", "border": "#B85450", "icon": "✕",  "label": "警告"},
+} %}
+{% set s = style_map.get(type|lower, style_map["tip"]) %}
+
+<div class="wechat-pub-card block-callout" style="
+    background: {{ s.bg }};
+    border: 1px solid {{ c_border_light }};
+    border-left: 3px solid {{ s.border }};
+    border-radius: 0 {{ r_card }} {{ r_card }} 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+">
+    <div style="display:flex; align-items:flex-start; gap:10px;">
+        <span style="flex-shrink:0; font-size:14px; line-height:1.6;">{{ s.icon }}</span>
+        <div>
+            <div style="
+                font-size: 11px;
+                font-weight: 600;
+                color: {{ s.border }};
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
+            ">{{ s.label }}</div>
+            <div style="
+                font-size: 15px;
+                color: {{ c_text }};
+                line-height: 1.7;
+            ">{{ body | nl2br }}</div>
+        </div>
+    </div>
+</div>

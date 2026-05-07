@@ -1,0 +1,42 @@
+<!-- toc 目录模块 — Claude 风格：暖色序号 + 克制间距 -->
+<div class="wechat-pub-card block-toc" style="
+    background: {{ c_card_bg }};
+    border: 1px solid {{ c_border }};
+    border-radius: {{ r_card }};
+    padding: 20px 24px;
+    margin: 24px 0;
+">
+    <div style="
+        font-size: 12px;
+        font-weight: 600;
+        color: {{ c_muted }};
+        margin-bottom: 16px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    ">目录</div>
+    {% if items %}
+    <div>
+        {% for item in items %}
+        <div style="
+            display: flex;
+            align-items: baseline;
+            padding: 9px 0;
+            {% if not loop.last %}border-bottom: 1px solid {{ c_border_light }};{% endif %}
+        ">
+            <span style="
+                flex-shrink: 0;
+                width: 20px;
+                font-size: 13px;
+                font-weight: 600;
+                color: {{ c_accent }};
+            ">{{ loop.index }}.</span>
+            <span style="
+                font-size: 15px;
+                color: {{ c_text }};
+                line-height: 1.5;
+            ">{% if item is mapping %}{{ item.title or item.name or item }}{% else %}{{ item }}{% endif %}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

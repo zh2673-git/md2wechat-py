@@ -1,0 +1,28 @@
+schema_version: "1"
+name: callout
+version: "1.0.0"
+category: sprint4
+serves:
+  - readability
+description: 提示框 — 5 种样式（info/tip/warning/success/danger），用于突出提示信息
+when_to_use: 需要突出提示信息、注意事项、技巧建议时
+when_not_to_use: 正文本身就足够强调的内容不需要 callout
+anti_pattern: |
+  callout 内容太长失去提示作用
+  滥用 callout 破坏阅读节奏
+fields:
+  required: []
+  optional:
+    - name: type
+      description: 样式类型：info(默认) / tip / warning / success / danger
+      example: "tip"
+    - name: _content
+      description: 提示内容（直接写在块内）
+example: |
+  :::block callout tip
+  💡 小技巧：先用 layout list 发现模块，再用 layout show 确认字段。
+  :::
+
+  :::block callout warning
+  ⚠️ 注意：排版模块仅在 API 模式下渲染。
+  :::

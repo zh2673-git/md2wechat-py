@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Generated output
+generated-images/
+*.html
+!design/code/python/wechat_pub/templates/**/*.html
+
+# Config (contains secrets)
+.config/
+
+# Temporary
+*.tmp
+*.bak

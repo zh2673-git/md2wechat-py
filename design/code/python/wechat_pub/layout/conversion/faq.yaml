@@ -1,0 +1,21 @@
+schema_version: "1"
+name: faq
+version: "1.0.0"
+category: conversion
+serves:
+  - conversion
+description: 常见问题卡片 — 用于处理读者潜在疑虑或 FAQ 场景
+when_to_use: 有 3-8 个读者经常问的问题，或需要处理潜在疑虑时
+when_not_to_use: 少于 3 个问题用普通段落即可
+fields:
+  required: []
+  optional:
+    - name: rows
+      description: "问答条目，格式: `问题 | 回答`，每行一组"
+      example: "API 模式和 AI 模式有什么区别？ | API 模式直接输出 HTML，AI 模式生成提示词。"
+example: |
+  :::block faq
+  API 模式和 AI 模式有什么区别？ | API 模式直接输出 HTML，AI 模式生成提示词。
+  文章需要用几个排版模块？ | 按 4 件事原则选，hero 1 个 verdict 1 个 cta 1 个。
+  需要懂设计吗？ | 不需要，照着字段填写就行。
+  :::

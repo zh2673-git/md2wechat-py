@@ -1,0 +1,34 @@
+schema_version: "1"
+name: verdict
+version: "1.0.0"
+category: judgment
+serves:
+  - memorability
+description: 最终判断卡 — 把核心结论单独拎出来，让读者记住你的立场
+when_to_use: 观点文、复盘、方案结论，把你的核心判断单独拎出来。一篇只用一个。
+when_not_to_use: 数据报告里用 infographic 替代；每篇文章最多一个
+anti_pattern: |
+  title 写成了描述而不是判断
+  一篇文章放两个 verdict
+  正文里重复同样的判断
+fields:
+  required:
+    - name: title
+      description: 核心判断语句
+      example: "真正的护城河不是模块数量，而是品牌表达系统"
+  optional:
+    - name: eyebrow
+      description: 标签前缀
+      example: "最终判断"
+    - name: body
+      description: 判断的延伸说明
+      example: "每个模块必须服务一个真实的阅读任务，否则只是换皮。"
+    - name: note
+      description: 适用范围或来源
+      example: "适合观点文、复盘、方案结论"
+example: |
+  :::block verdict
+  eyebrow: 最终判断
+  title: 真正的护城河不是模块数量，而是品牌表达系统
+  body: 每个模块必须服务一个真实的阅读任务，否则只是换皮。
+  :::

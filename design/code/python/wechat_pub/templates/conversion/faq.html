@@ -1,0 +1,42 @@
+<!-- faq 常见问题模块 — Claude 风格：Q&A 分色 + 暖边框 -->
+{% set title = title or "常见问题" %}
+
+<div class="wechat-pub-card block-faq" style="
+    padding: 24px;
+    background: {{ c_card_bg }};
+    border: 1px solid {{ c_border }};
+    border-radius: {{ r_card }};
+    margin: 24px 0;
+">
+    <div style="
+        font-size: 15px;
+        font-weight: 600;
+        color: {{ c_heading }};
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid {{ c_border_light }};
+    ">{{ title }}</div>
+
+    {% if items %}
+    {% for item in items %}
+    <div style="
+        padding: 14px 0;
+        {% if not loop.last %}border-bottom: 1px solid {{ c_border_light }};{% endif %}
+    ">
+        <div style="
+            font-weight: 600;
+            color: {{ c_accent }};
+            font-size: 15px;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        ">Q: {% if item is mapping %}{{ item.question or item.q or "" }}{% else %}{{ item }}{% endif %}</div>
+        <div style="
+            font-size: 14px;
+            color: {{ c_text }};
+            line-height: 1.75;
+            padding-left: 2px;
+        ">A: {% if item is mapping %}{{ item.answer or item.a or "" }}{% endif %}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>

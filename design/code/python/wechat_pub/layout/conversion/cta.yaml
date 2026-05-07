@@ -1,0 +1,27 @@
+schema_version: "1"
+name: cta
+version: "1.0.0"
+category: conversion
+serves:
+  - conversion
+description: 行动召唤 — 文章结尾引导读者关注、咨询、转发或购买
+when_to_use: 文章结尾，引导读者采取行动。一篇只用一个。
+when_not_to_use: 纯资讯文章不需要 CTA
+anti_pattern: |
+  title 写得太长失去冲击力
+  一篇文章放多个 CTA
+  前置 cta 在正文中间
+fields:
+  required:
+    - name: title
+      description: 核心行动号召
+      example: "如果你想把公众号做成稳定可复用的结构，可以从这套模块开始。"
+  optional:
+    - name: note
+      description: 补充说明
+      example: "联系作者咨询 API 服务"
+example: |
+  :::block cta
+  title: 如果你想把公众号做成稳定可复用的结构，可以从这套模块开始。
+  note: 联系作者咨询 API 服务
+  :::
