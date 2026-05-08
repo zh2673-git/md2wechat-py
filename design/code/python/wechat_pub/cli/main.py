@@ -81,6 +81,8 @@ def publish(ctx, file, theme, cover, title, author, auto_cover):
         # 先尝试 SVG（微信不一定支持），再尝试 PNG
         cover_result = img_engine.generate_placeholder_png(
             title=article_title,
+            subtitle=article_digest,
+            author=article_author,
             theme=theme,
             output_path=str(click.get_app_dir("wechat-pub") + "/auto_cover.png") if False else "",
         )

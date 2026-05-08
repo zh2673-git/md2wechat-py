@@ -1,7 +1,6 @@
-<!-- cta 行动号召模块 — Claude 风格：轻量卡片 + 赭石点缀 -->
+<!-- cta 行动号召模块 — Claude 风格：轻量卡片 + URL 纯文本显示 -->
 {% set title = title or "开始行动" %}
-{% set button_text = button_text or "了解更多" %}
-{% set button_url = button_url or "#" %}
+{% set button_url = button_url or "" %}
 
 <table style="width:100%;border-collapse:collapse;margin:32px 0;" cellpadding="0" cellspacing="0">
 <tr><td style="
@@ -16,19 +15,20 @@
         font-size: 17px;
         font-weight: 600;
         line-height: 1.6;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
         letter-spacing: 0.02em;
     ">{{ title }}</div>
+    {% if button_url %}
     <div style="
-        display: inline-block;
-        background: {{ c_accent }};
-        color: #fff;
-        font-size: 14px;
-        font-weight: 600;
-        padding: 10px 32px;
-        border-radius: {{ r_pill }};
-        text-decoration: none;
-        letter-spacing: 0.5px;
-    ">{{ button_text }} →</div>
+        color: {{ c_accent }};
+        font-size: 13px;
+        font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        background: {{ c_bg }};
+        padding: 8px 16px;
+        border-radius: 6px;
+        letter-spacing: 0.3px;
+        word-break: break-all;
+    ">{{ button_url }}</div>
+    {% endif %}
 </td></tr>
 </table>
