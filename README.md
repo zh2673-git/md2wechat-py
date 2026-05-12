@@ -18,7 +18,12 @@
 ## 它能做什么
 
 ```
-你的 Markdown 文稿
+你的 Markdown 文稿（或 AI 聊天记录 / 零散笔记）
+       ↓
+Agent 自动判断内容类型（完整文章 / AI聊天记录 / 笔记 / 零散想法）
+       ↓
+AI聊天记录 → 双输出：对话整理版 + 论文风格版
+笔记/零散想法 → 单输出：论文风格版
        ↓
 Agent 自动分析内容，插入 :::block 排版模块（hero / callout / verdict / cta 等）
        ↓
@@ -39,6 +44,9 @@ wechat-pub publish article.md --auto-cover --json   ← 推送草稿箱
 - **AI 配图**：自动生成占位封面，也可接入 AI 绘画
 - **一键推送**：从 Markdown 到微信草稿箱，一条命令
 - **Agent 原生**：所有命令支持 `--json` 输出，AI IDE 可直接调用
+- **多文件批量处理**：支持 `data/` 文件夹批量扫描，子文件夹合并、独立文件分别生成
+- **AI聊天记录双输出**：自动识别聊天记录，同时生成对话整理版和论文风格版
+- **规范化输出目录**：生成的改写稿统一保存到 `output/` 文件夹
 
 ## 快速开始
 
@@ -65,11 +73,23 @@ export WECHAT_APP_SECRET=你的AppSecret
 
 ### 使用方式一：配合 AI Agent（推荐）
 
-你只需要写纯 Markdown，Agent 自动完成排版增强、配图、推送。
+你只需要在 `data/` 文件夹中放入 Markdown 笔记或 AI 聊天记录，Agent 自动完成类型判断、改写、排版、配图和推送。
+
+支持批量处理：
+
+```
+data/
+├── 话题A/              ← 子文件夹 → 合并为1篇文章
+│   ├── 01_intro.md
+│   ├── 02_detail.md
+│   └── 03_summary.md
+├── 独立笔记.md          ← 直接 .md 文件 → 各生成1篇
+└── chat_with_ai.md     ← AI聊天记录 → 自动生成对话版+论文版两篇
+```
 
 支持：CodeBuddy、Claude Code、Trae、Cursor 等 AI IDE。
 
-Skill 定义在 `design/platform/codebuddy/skills/公众号skill/SKILL.md`。
+Skill 定义在项目根目录 `SKILL.md`（自动安装到 `.codebuddy/skills/公众号skill/SKILL.md`）。
 
 ### 使用方式二：命令行
 
