@@ -22,7 +22,7 @@ class Converter:
         """自定义渲染规则"""
         # 图片渲染：记录引用
         default_image = self._md.renderer.rules.get("image")
-        def _image_render(tokens, idx, options, env, slf):
+        def _image_render(tokens, idx, options, env, *args, **kwargs):
             token = tokens[idx]
             src = token.attrGet("src") or ""
             alt = token.content or ""

@@ -53,7 +53,9 @@ class ImageEngine:
 
             if not output_path:
                 safe_title = "".join(c for c in title[:20] if c.isalnum() or c in " _-") or "cover"
-                output_path = str(Path.cwd() / f"cover_{safe_title}.svg")
+                output_dir = Path.cwd() / "output" / "images"
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = str(output_dir / f"cover_{safe_title}.svg")
 
             svg = self._build_svg(title, subtitle, author, colors)
             Path(output_path).write_text(svg, encoding="utf-8")
@@ -92,7 +94,9 @@ class ImageEngine:
             w, h = self.WECHAT_COVER_W, self.WECHAT_COVER_H
 
             if not output_path:
-                output_path = str(Path.cwd() / "cover_placeholder.png")
+                output_dir = Path.cwd() / "output" / "images"
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = str(output_dir / "cover.png")
 
             # 创建画布
             img = Image.new("RGB", (w, h))
@@ -222,7 +226,10 @@ class ImageEngine:
             text_rgb = self._hex_to_rgb(colors["heading"])
 
             if not output_path:
-                output_path = str(Path.cwd() / "cover_placeholder.png")
+                output_dir = Path.cwd() / "output" / "images"
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = str(output_dir / "cover.png")
+
 
             w, h = self.WECHAT_COVER_W, self.WECHAT_COVER_H
             png = self._create_png_raw(w, h, bg_rgb, accent_rgb, text_rgb)
@@ -268,18 +275,18 @@ class ImageEngine:
         return themes.get(theme, themes["claude-warm"])
 
     def _build_svg(self, title: str, subtitle: str, author: str, c: dict) -> str:
-        """构建 Claude 风格 SVG 封面
+        """构建 Claude 风格 SVG 封面（美观版）
 
         设计语言：
         - 大面积留白，信息密度低，呼吸感强
-        - 左侧 accent 色竖条作为视觉锚点
-        - 标题左对齐，大字号 + 粗字重
-        - 右下角几何装饰（三角+圆）提供视觉平衡，不抢注意力
+        - 左侧 accent 色竖条作为视觉锚点（10px 宽）
+        - 标题左对齐，大字号 + 粗字重，留白充足
+        - 右下角几何装饰（三角+圆）提供视觉平衡
         - 底部信息区用细线分隔，保持层次清晰
+        - 右上角带装饰性圆弧，增加结构感
         """
-        # 截断标题防止溢出
-        display_title = title[:28] + ("..." if len(title) > 28 else "")
-        display_sub = subtitle[:45] + ("..." if len(subtitle) > 45 else "")
+        display_title = title[:32] + ("..." if len(title) > 32 else "")
+        display_sub = subtitle[:50] + ("..." if len(subtitle) > 50 else "")
         display_author = author[:20] + ("..." if len(author) > 20 else "")
 
         return f'''<?xml version="1.0" encoding="UTF-8"?>
@@ -287,40 +294,61 @@ class ImageEngine:
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:{c['bg']};stop-opacity:1" />
+      <stop offset="80%" style="stop-color:{c['bg']};stop-opacity:1" />
       <stop offset="100%" style="stop-color:{c['accent-light']};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="80%" y2="0%">
+      <stop offset="0%" style="stop-color:{c['heading']};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{c['heading']};stop-opacity:0.9" />
+    </linearGradient>
+    <linearGradient id="accGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{c['accent']};stop-opacity:0.6" />
     </linearGradient>
   </defs>
 
   <!-- 主背景 -->
   <rect width="100%" height="100%" fill="url(#bgGrad)" />
 
-  <!-- 左侧 accent 竖条 -->
-  <rect x="0" y="0" width="6" height="100%" fill="{c['accent']}" />
+  <!-- 左侧 accent 竖条（更宽，渐变） -->
+  <rect x="0" y="0" width="10" height="100%" fill="url(#accGrad)" />
 
-  <!-- 右下角几何装饰：三角 + 圆，提供视觉平衡 -->
-  <polygon points="900,383 900,263 780,383" fill="{c['accent']}" opacity="0.07" />
-  <circle cx="760" cy="305" r="55" fill="{c['warm']}" opacity="0.06" />
-  <circle cx="820" cy="350" r="20" fill="{c['accent']}" opacity="0.05" />
+  <!-- 右上角装饰圆弧 -->
+  <path d="M 680,-30 Q 780,80 900,200" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.08" />
+  <path d="M 530,-30 Q 680,100 900,300" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.05" />
 
-  <!-- 顶部细横线装饰 -->
-  <line x1="52" y1="52" x2="52" y2="52" stroke="{c['accent']}" stroke-width="3" stroke-linecap="round" />
+  <!-- 右下角几何装饰：三角 + 圆 -->
+  <polygon points="900,383 900,230 750,383" fill="{c['accent']}" opacity="0.07" />
+  <circle cx="740" cy="295" r="65" fill="{c['warm']}" opacity="0.06" />
+  <circle cx="810" cy="340" r="25" fill="{c['accent']}" opacity="0.05" />
+  <circle cx="860" cy="365" r="8" fill="{c['warm']}" opacity="0.08" />
 
-  <!-- 标题区域（左对齐，偏左上） -->
-  <text x="52" y="138" font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,sans-serif" font-size="34" font-weight="700" fill="{c['heading']}" letter-spacing="-0.5">{display_title}</text>
+  <!-- 顶部装饰线 -->
+  <line x1="42" y1="38" x2="90" y2="38" stroke="{c['accent']}" stroke-width="3" stroke-linecap="round" />
+
+  <!-- 主标题（加宽左间距，更大字号） -->
+  <text x="42" y="142"
+        font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
+        font-size="36" font-weight="700" fill="url(#titleGrad)" letter-spacing="-0.5">
+    {display_title}
+  </text>
 
   <!-- 副标题 -->
-  <text x="54" y="186" font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,sans-serif" font-size="16" fill="{c['muted']}" letter-spacing="0.2">{display_sub}</text>
+  <text x="44" y="195"
+        font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
+        font-size="16" fill="{c['muted']}" letter-spacing="0.3" opacity="0.9">
+    {display_sub}
+  </text>
 
-  <!-- accent 短横线（标题与底部信息分隔） -->
-  <line x1="52" y1="280" x2="110" y2="280" stroke="{c['accent']}" stroke-width="2.5" stroke-linecap="round" opacity="0.6" />
+  <!-- accent 短横线 -->
+  <line x1="42" y1="270" x2="120" y2="270" stroke="{c['accent']}" stroke-width="2.5" stroke-linecap="round" opacity="0.7" />
 
-  <!-- 底部作者信息 -->
-  <text x="54" y="330" font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,sans-serif" font-size="13" fill="{c['muted']}" letter-spacing="0.3">{display_author}</text>
-
-  <!-- 正中央品牌标识 -->
-  <rect x="350" y="163" width="200" height="56" rx="8" fill="{c['accent']}" opacity="0.06" stroke="{c['accent']}" stroke-width="1" stroke-opacity="0.2" />
-  <text x="450" y="198" font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,sans-serif" font-size="20" fill="{c['heading']}" text-anchor="middle" letter-spacing="3">zh2673 · 2026</text>
-
+  <!-- 底部作者 + 品牌 -->
+  <text x="44" y="340"
+        font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
+        font-size="13" fill="{c['muted']}" letter-spacing="0.4" opacity="0.8">
+    {display_author or "微信公众号"}
+  </text>
 </svg>'''
 
     @staticmethod
