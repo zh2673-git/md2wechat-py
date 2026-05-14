@@ -75,13 +75,13 @@ class ImageEngine:
         output_path: str = "",
         author: str = "",
     ) -> CoverResult:
-        """生成 Claude 风格 PNG 封面（使用 Pillow 渲染文字）
+        """生成高端深色风格 PNG 封面（使用 Pillow 渲染）
 
         封面布局：
-        - 左上：标题 + 副标题
-        - 正中央：品牌标识 zh2673 · 2026
-        - 左下：作者信息
-        - 右下角：几何装饰（三角 + 圆）
+        - 深色渐变背景 + 暖金属装饰
+        - 中心标题 + accent 下划线
+        - 同心圆 + 菱形几何装饰
+        - 四角 L 形角标
         """
         try:
             from PIL import Image, ImageDraw, ImageFont
@@ -90,95 +90,196 @@ class ImageEngine:
             return self._generate_fallback_png(title, theme, output_path)
 
         try:
-            colors = self._get_theme_colors(theme)
+            import math
             w, h = self.WECHAT_COVER_W, self.WECHAT_COVER_H
+            center_x = 450
+            crop_l, crop_r = 259, 641
 
             if not output_path:
                 output_dir = Path.cwd() / "output" / "images"
                 output_dir.mkdir(parents=True, exist_ok=True)
                 output_path = str(output_dir / "cover.png")
 
-            # 创建画布
-            img = Image.new("RGB", (w, h))
+            # ── 颜色定义 ──
+            bg_main = (28, 25, 23)       # #1C1917
+            bg_mid = (37, 34, 32)        # #252220
+            bg_deep = (17, 15, 13)       # #110F0D
+            accent = (201, 100, 66)      # #C96442
+            gold = (212, 167, 106)       # #D4A76A
+            gold_light = (232, 201, 138) # #E8C98A
+            text_main = (245, 240, 235)  # #F5F0EB
+            text_sub = (168, 159, 149)   # #A89F95
+
+            # ── 创建画布 ──
+            img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
 
-            # 绘制渐变背景
-            bg_rgb = self._hex_to_rgb(colors["bg"])
-            accent_light_rgb = self._hex_to_rgb(colors["accent-light"])
+            # ── 背景渐变 ──
             for y_px in range(h):
                 t = y_px / h
-                r = int(bg_rgb[0] * (1 - t) + accent_light_rgb[0] * t)
-                g = int(bg_rgb[1] * (1 - t) + accent_light_rgb[1] * t)
-                b = int(bg_rgb[2] * (1 - t) + accent_light_rgb[2] * t)
+                t2 = (y_px / h) * 0.3  # 水平方向偏移
+                r = int(bg_main[0] * (1 - t) + bg_deep[0] * t + (bg_mid[0] - bg_main[0]) * t2)
+                g = int(bg_main[1] * (1 - t) + bg_deep[1] * t + (bg_mid[1] - bg_main[1]) * t2)
+                b = int(bg_main[2] * (1 - t) + bg_deep[2] * t + (bg_mid[2] - bg_main[2]) * t2)
+                r = max(0, min(255, r))
+                g = max(0, min(255, g))
+                b = max(0, min(255, b))
                 draw.line([(0, y_px), (w, y_px)], fill=(r, g, b))
 
-            # 左侧 accent 竖条
-            accent_rgb = self._hex_to_rgb(colors["accent"])
-            draw.rectangle([0, 0, 5, h], fill=accent_rgb)
-
-            # 右下角几何装饰
-            accent_rgba = accent_rgb + (18,)  # ~7% opacity
-            warm_rgb = self._hex_to_rgb(colors.get("warm", "#B8860B"))
-            warm_rgba = warm_rgb + (15,)  # ~6% opacity
-
+            # ── 中央暖光晕 ──
             overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
             od = ImageDraw.Draw(overlay)
-            od.polygon([(w, h), (w, int(h * 0.69)), (int(w * 0.867), h)], fill=accent_rgba)
-            od.ellipse([int(w * 0.844 - h * 0.144), int(h * 0.797 - h * 0.144),
-                        int(w * 0.844 + h * 0.144), int(h * 0.797 + h * 0.144)], fill=warm_rgba)
-            od.ellipse([int(w * 0.911 - h * 0.052), int(h * 0.914 - h * 0.052),
-                        int(w * 0.911 + h * 0.052), int(h * 0.914 + h * 0.052)], fill=accent_rgba[:3] + (13,))
+            glow_r = int(h * 0.9)
+            for i in range(glow_r, 0, -2):
+                t = i / glow_r
+                alpha = int(46 * (1 - t) ** 2)  # accent ~18% opacity at center
+                color = accent + (alpha,)
+                od.ellipse([center_x - i, 170 - i, center_x + i, 170 + i], fill=color)
 
-            img_rgba = img.convert("RGBA")
-            img_rgba = Image.alpha_composite(img_rgba, overlay)
-            img = img_rgba.convert("RGB")
+            # 右上金色光晕
+            gr_cx, gr_cy = int(w * 0.78), int(h * 0.15)
+            glow_r2 = int(h * 0.8)
+            for i in range(glow_r2, 0, -2):
+                t = i / glow_r2
+                alpha = int(26 * (1 - t) ** 2)
+                color = gold + (alpha,)
+                od.ellipse([gr_cx - i, gr_cy - i, gr_cx + i, gr_cy + i], fill=color)
+
+            img = Image.alpha_composite(img, overlay)
             draw = ImageDraw.Draw(img)
 
-            # 加载字体
-            heading_rgb = self._hex_to_rgb(colors["heading"])
-            muted_rgb = self._hex_to_rgb(colors["muted"])
+            # ── 左下角暖色光晕 ──
+            bl_overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            bld = ImageDraw.Draw(bl_overlay)
+            bl_cx, bl_cy = int(w * 0.22), int(h * 0.85)
+            glow_r3 = int(h * 0.6)
+            for i in range(glow_r3, 0, -2):
+                t = i / glow_r3
+                alpha = int(30 * (1 - t) ** 2)
+                color = accent + (alpha,)
+                bld.ellipse([bl_cx - i, bl_cy - i, bl_cx + i, bl_cy + i], fill=color)
 
+            img = Image.alpha_composite(img, bl_overlay)
+            draw = ImageDraw.Draw(img)
+
+            # ── 左右竖向装饰线（裁剪区外） ──
+            line_color_r = gold + (46,)  # ~18%
+            line_color_l = accent + (38,)  # ~15%
+            draw.line([(w - 60, 40), (w - 60, h - 40)], fill=line_color_r, width=1)
+            draw.line([(w - 45, 60), (w - 45, h - 60)], fill=gold + (26,), width=1)
+            draw.line([(60, 40), (60, h - 40)], fill=line_color_l, width=1)
+            draw.line([(45, 60), (45, h - 60)], fill=accent + (20,), width=1)
+
+            # ── 宇宙/哲学意象 ──
+
+            # 倾斜轨道椭圆（用点阵近似）
+            import math as _m
+            orbit_overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            od2 = ImageDraw.Draw(orbit_overlay)
+            # 轨道 1：倾斜 -8°
+            cx, cy = center_x, 175
+            rx, ry = 170, 45
+            angle1 = _m.radians(-8)
+            for deg in range(0, 360, 2):
+                rad = _m.radians(deg)
+                px = rx * _m.cos(rad)
+                py = ry * _m.sin(rad)
+                x_rot = cx + px * _m.cos(angle1) - py * _m.sin(angle1)
+                y_rot = cy + px * _m.sin(angle1) + py * _m.cos(angle1)
+                od2.ellipse([x_rot - 0.8, y_rot - 0.8, x_rot + 0.8, y_rot + 0.8], fill=gold + (56,))
+            # 轨道 2：倾斜 22°
+            angle2 = _m.radians(22)
+            for deg in range(0, 360, 3):
+                rad = _m.radians(deg)
+                px = rx * _m.cos(rad)
+                py = ry * _m.sin(rad)
+                x_rot = cx + px * _m.cos(angle2) - py * _m.sin(angle2)
+                y_rot = cy + px * _m.sin(angle2) + py * _m.cos(angle2)
+                od2.ellipse([x_rot - 0.5, y_rot - 0.5, x_rot + 0.5, y_rot + 0.5], fill=gold + (26,))
+
+            img = Image.alpha_composite(img, orbit_overlay)
+            draw = ImageDraw.Draw(img)
+
+            # 微星点缀
+            stars = [
+                (center_x - 120, 60, 1.8, gold_light + (128,)),   # 50%
+                (center_x + 95, 52, 1.2, gold + (89,)),           # 35%
+                (center_x + 140, 310, 1.5, gold_light + (102,)),  # 40%
+                (center_x - 80, 300, 1.0, gold + (77,)),          # 30%
+                (center_x - 155, 180, 0.8, gold + (51,)),         # 20%
+                (center_x + 60, 250, 1.3, gold_light + (77,)),    # 30%
+                (center_x - 30, 340, 0.7, gold + (64,)),          # 25%
+            ]
+            for sx, sy, sr, sc in stars:
+                draw.ellipse([sx - sr, sy - sr, sx + sr, sy + sr], fill=sc)
+
+            # 右上小月牙
+            moon_cx, moon_cy, moon_r = crop_r - 45, 52, 10
+            draw.ellipse([moon_cx - moon_r, moon_cy - moon_r, moon_cx + moon_r, moon_cy + moon_r], fill=gold + (38,))
+            # 用深色圆覆盖形成月牙
+            offset = 4
+            draw.ellipse([moon_cx + offset - moon_r, moon_cy - offset - moon_r + 1,
+                          moon_cx + offset + moon_r, moon_cy - offset + moon_r + 1], fill=bg_main + (217,))
+
+            # ── 四角 L 形角标 ──
+            corner_len = 20
+            corner_pad = 12
+            corner_alpha = 115  # ~45%
+            corner_color = gold + (corner_alpha,)
+            # 左上
+            draw.line([(crop_l + corner_pad, 8), (crop_l + corner_pad, 8 + corner_len)], fill=corner_color, width=2)
+            draw.line([(crop_l + corner_pad, 8), (crop_l + corner_pad + corner_len, 8)], fill=corner_color, width=2)
+            # 右上
+            draw.line([(crop_r - corner_pad, 8), (crop_r - corner_pad, 8 + corner_len)], fill=corner_color, width=2)
+            draw.line([(crop_r - corner_pad - corner_len, 8), (crop_r - corner_pad, 8)], fill=corner_color, width=2)
+            # 左下
+            draw.line([(crop_l + corner_pad, h - 8), (crop_l + corner_pad, h - 8 - corner_len)], fill=corner_color, width=2)
+            draw.line([(crop_l + corner_pad, h - 8), (crop_l + corner_pad + corner_len, h - 8)], fill=corner_color, width=2)
+            # 右下
+            draw.line([(crop_r - corner_pad, h - 8), (crop_r - corner_pad, h - 8 - corner_len)], fill=corner_color, width=2)
+            draw.line([(crop_r - corner_pad - corner_len, h - 8), (crop_r - corner_pad, h - 8)], fill=corner_color, width=2)
+
+            # ── 顶部/底部金色渐变线 ──
+            line_overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            ld = ImageDraw.Draw(line_overlay)
+            for x_px in range(30, 870):
+                t = (x_px - 30) / 840.0
+                # bell curve: max at center
+                bell = max(0, 1.0 - abs(t - 0.5) * 2.5)
+                alpha = int(179 * bell)  # max ~70%
+                ld.line([(x_px, 18), (x_px + 1, 18)], fill=gold + (alpha,), width=1)
+                ld.line([(x_px, h - 18), (x_px + 1, h - 18)], fill=gold + (alpha,), width=1)
+            img = Image.alpha_composite(img, line_overlay)
+            draw = ImageDraw.Draw(img)
+
+            # ── 标题下 accent 横线 ──
+            draw.line([(center_x - 60, 148), (center_x + 60, 148)], fill=accent + (204,), width=3)
+
+            # ── 文字 ──
             font_title = self._load_font(34, bold=True)
-            font_sub = self._load_font(16)
             font_author = self._load_font(13)
-            font_brand = self._load_font(20)
+            font_sub = self._load_font(11)
 
-            # 标题（左上）
             display_title = title[:28] + ("..." if len(title) > 28 else "")
-            if display_title:
-                draw.text((52, 110), display_title, fill=heading_rgb, font=font_title)
-
-            # 副标题
-            display_sub = subtitle[:45] + ("..." if len(subtitle) > 45 else "")
-            if display_sub:
-                draw.text((54, 158), display_sub, fill=muted_rgb, font=font_sub)
-
-            # accent 短横线
-            draw.line([(52, 280), (110, 280)], fill=accent_rgb, width=2)
-
-            # 底部作者
             display_author = author[:20] + ("..." if len(author) > 20 else "")
+            display_sub = subtitle[:50] + ("..." if len(subtitle) > 50 else "")
+
+            if display_title:
+                bbox = draw.textbbox((0, 0), display_title, font=font_title)
+                tw = bbox[2] - bbox[0]
+                draw.text((center_x - tw // 2, 105), display_title, fill=text_main, font=font_title)
+
             if display_author:
-                draw.text((54, 300), display_author, fill=muted_rgb, font=font_author)
+                bbox = draw.textbbox((0, 0), display_author, font=font_author)
+                aw = bbox[2] - bbox[0]
+                draw.text((center_x - aw // 2, 165), display_author, fill=text_sub, font=font_author)
 
-            # 正中央品牌标识：zh2673 · 2026
-            brand_text = "zh2673 · 2026"
-            bbox = draw.textbbox((0, 0), brand_text, font=font_brand)
-            brand_w = bbox[2] - bbox[0]
-            brand_h = bbox[3] - bbox[1]
-            brand_x = (w - brand_w) // 2
-            brand_y = (h - brand_h) // 2 - 10
-            # 品牌背景圆角矩形
-            pad_x, pad_y = 20, 12
-            draw.rounded_rectangle(
-                [brand_x - pad_x, brand_y - pad_y, brand_x + brand_w + pad_x, brand_y + brand_h + pad_y],
-                radius=8,
-                fill=accent_rgb + (25,) if len(accent_rgb) == 3 else accent_rgb,
-                outline=accent_rgb,
-                width=1,
-            )
-            draw.text((brand_x, brand_y), brand_text, fill=heading_rgb, font=font_brand)
+            if display_sub:
+                bbox = draw.textbbox((0, 0), display_sub, font=font_sub)
+                sw_val = bbox[2] - bbox[0]
+                draw.text((center_x - sw_val // 2, h - 45), display_sub, fill=text_sub + (153,), font=font_sub)
 
+            img = img.convert("RGB")
             img.save(output_path, "PNG")
             return CoverResult(success=True, file_path=output_path, width=w, height=h)
         except Exception as e:
@@ -278,14 +379,14 @@ class ImageEngine:
         return themes.get(theme, themes["claude-warm"])
 
     def _build_svg(self, title: str, subtitle: str, author: str, c: dict) -> str:
-        """构建 Claude 风格 SVG 封面（中心布局，微信方形裁剪友好）
+        """构建高端 SVG 封面（中心布局，微信方形裁剪友好）
 
         设计语言：
+        - 深色背景 + 暖金属质感，杂志封面风格
         - 微信列表页从 900x383 中心裁出 383x383 方形 → 核心视觉元素必须在 x:259-641 范围内
-        - 标题居中，大字号 + 粗字重，居中排列
-        - 大面积留白，呼吸感强
-        - 中心区域有装饰图案，方形裁剪下不单调
-        - 边缘装饰仅作为全尺寸展示时的补充
+        - 大面积抽象几何装饰，填充+描边混合，层次丰富
+        - 高对比度排版，标题醒目
+        - 多层渐变营造纵深感
         """
         display_title = title[:32] + ("..." if len(title) > 32 else "")
         display_sub = subtitle[:50] + ("..." if len(subtitle) > 50 else "")
@@ -294,98 +395,152 @@ class ImageEngine:
         # 微信方形裁剪边界（近似）
         crop_l, crop_r = 259, 641
         center_x = (crop_l + crop_r) // 2  # 450
+        W, H = self.WECHAT_COVER_W, self.WECHAT_COVER_H
+
+        # 根据主题决定深色/浅色模式
+        is_dark = c["bg"] in ("#1A1816", "#1C1917", "#1F1D1A")
+        # 浅色主题自动转为深色方案以保证视觉冲击力
+        bg_main = "#1C1917" if not is_dark else c["bg"]
+        bg_deep = "#110F0D"
+        bg_mid = "#252220"
+        accent = c["accent"]  # #C96442
+        gold = "#D4A76A"
+        gold_light = "#E8C98A"
+        text_main = "#F5F0EB"
+        text_sub = "#A89F95"
 
         return f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="{self.WECHAT_COVER_W}" height="{self.WECHAT_COVER_H}" viewBox="0 0 {self.WECHAT_COVER_W} {self.WECHAT_COVER_H}">
+<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">
   <defs>
-    <!-- 背景渐变：从暖白到底部淡赭石 -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:{c['bg']};stop-opacity:1" />
-      <stop offset="55%" style="stop-color:{c['bg-mid']};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:{c['accent-light']};stop-opacity:1" />
+    <!-- 主背景渐变：深暖色，从上到下微暗 -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="30%" y2="100%">
+      <stop offset="0%" style="stop-color:{bg_main};stop-opacity:1" />
+      <stop offset="50%" style="stop-color:{bg_mid};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{bg_deep};stop-opacity:1" />
     </linearGradient>
 
-    <!-- 精致微纹理：细密点阵 -->
-    <pattern id="dotPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-      <circle cx="10" cy="10" r="0.6" fill="{c['accent']}" opacity="0.08" />
-      <circle cx="0" cy="0" r="0.6" fill="{c['accent']}" opacity="0.08" />
-    </pattern>
-
-    <!-- 更细密的第二层纹理 -->
-    <pattern id="linePattern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-      <line x1="0" y1="30" x2="60" y2="30" stroke="{c['accent']}" stroke-width="0.3" opacity="0.04" />
-      <line x1="30" y1="0" x2="30" y2="60" stroke="{c['accent']}" stroke-width="0.3" opacity="0.04" />
-    </pattern>
-
-    <!-- 中央柔光 -->
-    <radialGradient id="centerGlow" cx="50%" cy="38%" r="38%">
-      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:0.15" />
-      <stop offset="45%" style="stop-color:{c['accent']};stop-opacity:0.08" />
-      <stop offset="100%" style="stop-color:{c['accent']};stop-opacity:0" />
+    <!-- 中央暖光晕 -->
+    <radialGradient id="centerGlow" cx="50%" cy="42%" r="45%">
+      <stop offset="0%" style="stop-color:{accent};stop-opacity:0.18" />
+      <stop offset="40%" style="stop-color:{accent};stop-opacity:0.08" />
+      <stop offset="100%" style="stop-color:{accent};stop-opacity:0" />
     </radialGradient>
 
-    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:{c['heading']};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:{c['heading']};stop-opacity:0.9" />
+    <!-- 右上角冷色光晕 -->
+    <radialGradient id="topRightGlow" cx="78%" cy="15%" r="35%">
+      <stop offset="0%" style="stop-color:{gold};stop-opacity:0.10" />
+      <stop offset="100%" style="stop-color:{gold};stop-opacity:0" />
+    </radialGradient>
+
+    <!-- 左下角暖色光晕 -->
+    <radialGradient id="bottomLeftGlow" cx="22%" cy="85%" r="30%">
+      <stop offset="0%" style="stop-color:{accent};stop-opacity:0.12" />
+      <stop offset="100%" style="stop-color:{accent};stop-opacity:0" />
+    </radialGradient>
+
+    <!-- 金色渐变（用于装饰线） -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:{gold};stop-opacity:0" />
+      <stop offset="20%" style="stop-color:{gold};stop-opacity:0.7" />
+      <stop offset="50%" style="stop-color:{gold_light};stop-opacity:1" />
+      <stop offset="80%" style="stop-color:{gold};stop-opacity:0.7" />
+      <stop offset="100%" style="stop-color:{gold};stop-opacity:0" />
     </linearGradient>
+
+    <!-- accent 渐变 -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:{accent};stop-opacity:0" />
+      <stop offset="30%" style="stop-color:{accent};stop-opacity:0.8" />
+      <stop offset="70%" style="stop-color:{accent};stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:{accent};stop-opacity:0" />
+    </linearGradient>
+
+    <!-- 散点纹理 -->
+    <pattern id="scatterDots" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="15" r="1.2" fill="{gold}" opacity="0.15" />
+      <circle cx="55" cy="40" r="0.8" fill="{gold}" opacity="0.10" />
+      <circle cx="10" cy="60" r="1.0" fill="{gold}" opacity="0.12" />
+      <circle cx="70" cy="72" r="0.6" fill="{accent}" opacity="0.08" />
+      <circle cx="40" cy="8" r="0.7" fill="{accent}" opacity="0.10" />
+    </pattern>
   </defs>
 
-  <!-- 主背景 -->
+  <!-- ===== 背景层 ===== -->
   <rect width="100%" height="100%" fill="url(#bgGrad)" />
-
-  <!-- 点阵纹理层 -->
-  <rect width="100%" height="100%" fill="url(#dotPattern)" />
-  <rect width="100%" height="100%" fill="url(#linePattern)" />
-
-  <!-- 中央柔光 -->
   <rect width="100%" height="100%" fill="url(#centerGlow)" />
+  <rect width="100%" height="100%" fill="url(#topRightGlow)" />
+  <rect width="100%" height="100%" fill="url(#bottomLeftGlow)" />
+  <rect width="100%" height="100%" fill="url(#scatterDots)" />
 
-  <!-- ===== 高端几何装饰 ===== -->
+  <!-- ===== 全尺寸专属装饰（方形裁剪区外） ===== -->
 
-  <!-- 中心主圆（三圈同心） -->
-  <circle cx="{center_x}" cy="185" r="130" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.10" />
-  <circle cx="{center_x}" cy="185" r="100" fill="none" stroke="{c['accent']}" stroke-width="0.8" opacity="0.08" />
-  <circle cx="{center_x}" cy="185" r="70" fill="none" stroke="{c['accent']}" stroke-width="0.6" opacity="0.07" />
+  <!-- 右侧大弧线（x>641 裁剪区外，全尺寸可见） -->
+  <path d="M 660,-30 A 280,280 0 0,1 {W+50},250" fill="none" stroke="{gold}" stroke-width="1.5" opacity="0.25" />
+  <path d="M 680,-20 A 300,300 0 0,1 {W+30},280" fill="none" stroke="{gold}" stroke-width="0.8" opacity="0.15" />
 
-  <!-- 中心菱形（四个顶点在外圈上） -->
-  <polygon points="{center_x},55 {center_x+130},185 {center_x},315 {center_x-130},185" fill="none" stroke="{c['accent']}" stroke-width="0.5" opacity="0.10" />
-  <polygon points="{center_x},85 {center_x+100},185 {center_x},285 {center_x-100},185" fill="none" stroke="{c['accent']}" stroke-width="0.4" opacity="0.07" />
-  <polygon points="{center_x},115 {center_x+70},185 {center_x},255 {center_x-70},185" fill="none" stroke="{c['accent']}" stroke-width="0.3" opacity="0.05" />
+  <!-- 左侧大弧线（x<259 裁剪区外，全尺寸可见） -->
+  <path d="M 240,{H+30} A 280,280 0 0,1 -50,120" fill="none" stroke="{accent}" stroke-width="1.5" opacity="0.20" />
+  <path d="M 220,{H+20} A 300,300 0 0,1 -30,90" fill="none" stroke="{accent}" stroke-width="0.8" opacity="0.12" />
 
-  <!-- 中心装饰点 -->
-  <circle cx="{center_x}" cy="185" r="3" fill="{c['accent']}" opacity="0.20" />
+  <!-- 右侧竖向装饰线组（裁剪区外） -->
+  <line x1="{W-60}" y1="40" x2="{W-60}" y2="{H-40}" stroke="{gold}" stroke-width="0.6" opacity="0.18" />
+  <line x1="{W-45}" y1="60" x2="{W-45}" y2="{H-60}" stroke="{gold}" stroke-width="0.3" opacity="0.10" />
 
-  <!-- 水平装饰线（上、下） -->
-  <line x1="60" y1="38" x2="{center_x - 140}" y2="38" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
-  <line x1="{center_x + 140}" y1="38" x2="840" y2="38" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
-  <line x1="60" y1="44" x2="{center_x - 130}" y2="44" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
-  <line x1="{center_x + 130}" y1="44" x2="840" y2="44" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
+  <!-- 左侧竖向装饰线组（裁剪区外） -->
+  <line x1="60" y1="40" x2="60" y2="{H-40}" stroke="{accent}" stroke-width="0.6" opacity="0.15" />
+  <line x1="45" y1="60" x2="45" y2="{H-60}" stroke="{accent}" stroke-width="0.3" opacity="0.08" />
 
-  <line x1="60" y1="345" x2="{center_x - 140}" y2="345" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
-  <line x1="{center_x + 140}" y1="345" x2="840" y2="345" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
-  <line x1="60" y1="339" x2="{center_x - 130}" y2="339" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
-  <line x1="{center_x + 130}" y1="339" x2="840" y2="339" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
+  <!-- ===== 中心区域：极简留白 + 宇宙/哲学意象 ===== -->
 
-  <!-- ===== 标题区域 ===== -->
-  <text x="{center_x}" y="148"
+  <!-- 倾斜轨道椭圆（行星轨道，宇宙秩序） -->
+  <ellipse cx="{center_x}" cy="175" rx="170" ry="45" fill="none" stroke="{gold}" stroke-width="0.8" opacity="0.22" transform="rotate(-8 {center_x} 175)" />
+  <ellipse cx="{center_x}" cy="175" rx="170" ry="45" fill="none" stroke="{gold}" stroke-width="0.4" opacity="0.10" transform="rotate(22 {center_x} 175)" />
+
+  <!-- 微星点缀（不同亮度，深空感） -->
+  <circle cx="{center_x-120}" cy="60" r="1.8" fill="{gold_light}" opacity="0.50" />
+  <circle cx="{center_x+95}" cy="52" r="1.2" fill="{gold}" opacity="0.35" />
+  <circle cx="{center_x+140}" cy="310" r="1.5" fill="{gold_light}" opacity="0.40" />
+  <circle cx="{center_x-80}" cy="300" r="1.0" fill="{gold}" opacity="0.30" />
+  <circle cx="{center_x-155}" cy="180" r="0.8" fill="{gold}" opacity="0.20" />
+  <circle cx="{center_x+60}" cy="250" r="1.3" fill="{gold_light}" opacity="0.30" />
+  <circle cx="{center_x-30}" cy="340" r="0.7" fill="{gold}" opacity="0.25" />
+
+  <!-- 右上小月牙（天体意象，阴晴圆缺） -->
+  <circle cx="{crop_r-45}" cy="52" r="10" fill="{gold}" opacity="0.15" />
+  <circle cx="{crop_r-41}" cy="49" r="9" fill="{bg_main}" opacity="0.85" />
+
+  <!-- 四角 L 形角标（方形裁剪区框线） -->
+  <polyline points="{crop_l+12},22 {crop_l+12},8 {crop_l+32},8" fill="none" stroke="{gold}" stroke-width="1.5" opacity="0.45" stroke-linecap="round" />
+  <polyline points="{crop_r-32},8 {crop_r-12},8 {crop_r-12},22" fill="none" stroke="{gold}" stroke-width="1.5" opacity="0.45" stroke-linecap="round" />
+  <polyline points="{crop_l+12},{H-22} {crop_l+12},{H-8} {crop_l+32},{H-8}" fill="none" stroke="{gold}" stroke-width="1.5" opacity="0.45" stroke-linecap="round" />
+  <polyline points="{crop_r-32},{H-8} {crop_r-12},{H-8} {crop_r-12},{H-22}" fill="none" stroke="{gold}" stroke-width="1.5" opacity="0.45" stroke-linecap="round" />
+
+  <!-- ===== 顶部/底部装饰线 ===== -->
+  <line x1="30" y1="18" x2="870" y2="18" stroke="url(#goldGrad)" stroke-width="1" />
+  <line x1="30" y1="{H-18}" x2="870" y2="{H-18}" stroke="url(#goldGrad)" stroke-width="1" />
+
+  <!-- ===== 标题区域（中心留白区的视觉重心） ===== -->
+  <text x="{center_x}" y="130"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="32" font-weight="700" fill="url(#titleGrad)" text-anchor="middle" letter-spacing="-0.3">
+        font-size="34" font-weight="700" fill="{text_main}" text-anchor="middle" letter-spacing="1">
     {display_title}
   </text>
 
-  <text x="{center_x}" y="183"
+  <!-- 标题下 accent 横线 -->
+  <line x1="{center_x-60}" y1="148" x2="{center_x+60}" y2="148" stroke="{accent}" stroke-width="2.5" stroke-linecap="round" opacity="0.80" />
+
+  <!-- 作者/来源 -->
+  <text x="{center_x}" y="178"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="14" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.3" opacity="0.85">
+        font-size="13" fill="{text_sub}" text-anchor="middle" letter-spacing="1.5" opacity="0.90">
     {display_author or "微信公众号"}
   </text>
 
-  <!-- 底部横线 -->
-  <line x1="{center_x - 30}" y1="280" x2="{center_x + 30}" y2="280" stroke="{c['accent']}" stroke-width="2" stroke-linecap="round" opacity="0.40" />
-
-  <text x="{center_x}" y="338"
+  <!-- 底部副标题 -->
+  <text x="{center_x}" y="{H-40}"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="11" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.4" opacity="0.65">
-    {display_sub if display_sub else "阅读更多"}
+        font-size="11" fill="{text_sub}" text-anchor="middle" letter-spacing="0.8" opacity="0.60">
+    {display_sub if display_sub else "READ MORE →"}
   </text>
 </svg>'''
 
