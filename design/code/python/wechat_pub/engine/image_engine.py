@@ -247,7 +247,8 @@ class ImageEngine:
             "claude-warm": {
                 "accent": "#C96442",
                 "accent-light": "#F5E6DC",
-                "bg": "#FAF7F2",
+                "bg": "#F2EBE4",
+                "bg-mid": "#EDE3D8",
                 "text": "#3D3A36",
                 "heading": "#1F1D1A",
                 "muted": "#8C8278",
@@ -257,6 +258,7 @@ class ImageEngine:
                 "accent": "#C96442",
                 "accent-light": "#FBF4EF",
                 "bg": "#FFFFFF",
+                "bg-mid": "#FAFAF8",
                 "text": "#37352F",
                 "heading": "#1A1A1A",
                 "muted": "#9B9B9B",
@@ -266,6 +268,7 @@ class ImageEngine:
                 "accent": "#D4896C",
                 "accent-light": "#3D2E24",
                 "bg": "#1A1816",
+                "bg-mid": "#221F1C",
                 "text": "#D4CFC8",
                 "heading": "#F0EBE3",
                 "muted": "#8C8278",
@@ -295,79 +298,93 @@ class ImageEngine:
         return f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{self.WECHAT_COVER_W}" height="{self.WECHAT_COVER_H}" viewBox="0 0 {self.WECHAT_COVER_W} {self.WECHAT_COVER_H}">
   <defs>
+    <!-- 背景渐变：从暖白到底部淡赭石 -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:{c['bg']};stop-opacity:1" />
-      <stop offset="60%" style="stop-color:{c['bg']};stop-opacity:1" />
+      <stop offset="55%" style="stop-color:{c['bg-mid']};stop-opacity:1" />
       <stop offset="100%" style="stop-color:{c['accent-light']};stop-opacity:1" />
     </linearGradient>
-    <radialGradient id="centerGlow" cx="50%" cy="35%" r="35%">
-      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:0.12" />
-      <stop offset="40%" style="stop-color:{c['accent']};stop-opacity:0.06" />
+
+    <!-- 精致微纹理：细密点阵 -->
+    <pattern id="dotPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="10" r="0.6" fill="{c['accent']}" opacity="0.08" />
+      <circle cx="0" cy="0" r="0.6" fill="{c['accent']}" opacity="0.08" />
+    </pattern>
+
+    <!-- 更细密的第二层纹理 -->
+    <pattern id="linePattern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="30" x2="60" y2="30" stroke="{c['accent']}" stroke-width="0.3" opacity="0.04" />
+      <line x1="30" y1="0" x2="30" y2="60" stroke="{c['accent']}" stroke-width="0.3" opacity="0.04" />
+    </pattern>
+
+    <!-- 中央柔光 -->
+    <radialGradient id="centerGlow" cx="50%" cy="38%" r="38%">
+      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:0.15" />
+      <stop offset="45%" style="stop-color:{c['accent']};stop-opacity:0.08" />
       <stop offset="100%" style="stop-color:{c['accent']};stop-opacity:0" />
     </radialGradient>
+
     <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:{c['heading']};stop-opacity:1" />
-      <stop offset="50%" style="stop-color:{c['heading']};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:{c['heading']};stop-opacity:0.85" />
+      <stop offset="100%" style="stop-color:{c['heading']};stop-opacity:0.9" />
     </linearGradient>
   </defs>
 
-  <!-- 主背景：从上到下的渐变 -->
+  <!-- 主背景 -->
   <rect width="100%" height="100%" fill="url(#bgGrad)" />
 
-  <!-- 中央柔光：使中间区域有层次感  -->
-  <rect x="0" y="0" width="100%" height="100%" fill="url(#centerGlow)" />
+  <!-- 点阵纹理层 -->
+  <rect width="100%" height="100%" fill="url(#dotPattern)" />
+  <rect width="100%" height="100%" fill="url(#linePattern)" />
 
-  <!-- ===== 中心装饰图案（方形裁剪区域内可见） ===== -->
+  <!-- 中央柔光 -->
+  <rect width="100%" height="100%" fill="url(#centerGlow)" />
 
-  <!-- 中心位置的大圆（加深纹路） -->
-  <circle cx="{center_x}" cy="175" r="120" fill="none" stroke="{c['accent']}" stroke-width="1.2" opacity="0.15" />
-  <circle cx="{center_x}" cy="175" r="90" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.12" />
-  <circle cx="{center_x}" cy="175" r="60" fill="none" stroke="{c['warm']}" stroke-width="0.8" opacity="0.13" />
-  <!-- 额外装饰圆环 -->
-  <circle cx="{center_x}" cy="175" r="150" fill="none" stroke="{c['accent']}" stroke-width="0.8" opacity="0.08" />
-  <circle cx="{center_x}" cy="175" r="40" fill="none" stroke="{c['accent']}" stroke-width="0.6" opacity="0.10" />
+  <!-- ===== 高端几何装饰 ===== -->
 
-  <!-- 中心装饰小圆点 -->
-  <circle cx="{center_x}" cy="175" r="4" fill="{c['accent']}" opacity="0.25" />
+  <!-- 中心主圆（三圈同心） -->
+  <circle cx="{center_x}" cy="185" r="130" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.10" />
+  <circle cx="{center_x}" cy="185" r="100" fill="none" stroke="{c['accent']}" stroke-width="0.8" opacity="0.08" />
+  <circle cx="{center_x}" cy="185" r="70" fill="none" stroke="{c['accent']}" stroke-width="0.6" opacity="0.07" />
 
-  <!-- 上下方的装饰短线 -->
-  <line x1="{center_x - 50}" y1="60" x2="{center_x + 50}" y2="60" stroke="{c['accent']}" stroke-width="1.5" opacity="0.30" stroke-linecap="round" />
-  <line x1="{center_x - 30}" y1="67" x2="{center_x + 30}" y2="67" stroke="{c['accent']}" stroke-width="1" opacity="0.18" stroke-linecap="round" />
-  <line x1="{center_x - 50}" y1="315" x2="{center_x + 50}" y2="315" stroke="{c['accent']}" stroke-width="1.5" opacity="0.30" stroke-linecap="round" />
-  <line x1="{center_x - 30}" y1="308" x2="{center_x + 30}" y2="308" stroke="{c['accent']}" stroke-width="1" opacity="0.18" stroke-linecap="round" />
+  <!-- 中心菱形（四个顶点在外圈上） -->
+  <polygon points="{center_x},55 {center_x+130},185 {center_x},315 {center_x-130},185" fill="none" stroke="{c['accent']}" stroke-width="0.5" opacity="0.10" />
+  <polygon points="{center_x},85 {center_x+100},185 {center_x},285 {center_x-100},185" fill="none" stroke="{c['accent']}" stroke-width="0.4" opacity="0.07" />
+  <polygon points="{center_x},115 {center_x+70},185 {center_x},255 {center_x-70},185" fill="none" stroke="{c['accent']}" stroke-width="0.3" opacity="0.05" />
 
-  <!-- ===== 左右边缘装饰（全尺寸可见，方形裁剪时不可见） ===== -->
+  <!-- 中心装饰点 -->
+  <circle cx="{center_x}" cy="185" r="3" fill="{c['accent']}" opacity="0.20" />
 
-  <!-- 左侧装饰弧线 -->
-  <path d="M -20,-20 Q 60,100 80,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.12" />
-  <path d="M 20,-20 Q 100,100 120,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.08" />
+  <!-- 水平装饰线（上、下） -->
+  <line x1="60" y1="38" x2="{center_x - 140}" y2="38" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
+  <line x1="{center_x + 140}" y1="38" x2="840" y2="38" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
+  <line x1="60" y1="44" x2="{center_x - 130}" y2="44" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
+  <line x1="{center_x + 130}" y1="44" x2="840" y2="44" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
 
-  <!-- 右侧装饰弧线 -->
-  <path d="M 920,-20 Q 840,100 820,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.12" />
-  <path d="M 880,-20 Q 800,100 780,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.08" />
+  <line x1="60" y1="345" x2="{center_x - 140}" y2="345" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
+  <line x1="{center_x + 140}" y1="345" x2="840" y2="345" stroke="{c['accent']}" stroke-width="1.5" stroke-linecap="round" opacity="0.20" />
+  <line x1="60" y1="339" x2="{center_x - 130}" y2="339" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
+  <line x1="{center_x + 130}" y1="339" x2="840" y2="339" stroke="{c['accent']}" stroke-width="0.8" stroke-linecap="round" opacity="0.12" />
 
-  <!-- ===== 主标题（居中，方形裁剪内可见） ===== -->
-  <text x="{center_x}" y="145"
+  <!-- ===== 标题区域 ===== -->
+  <text x="{center_x}" y="148"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="34" font-weight="700" fill="url(#titleGrad)" text-anchor="middle" letter-spacing="-0.3">
+        font-size="32" font-weight="700" fill="url(#titleGrad)" text-anchor="middle" letter-spacing="-0.3">
     {display_title}
   </text>
 
-  <!-- 副标题 -->
-  <text x="{center_x}" y="185"
+  <text x="{center_x}" y="183"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="15" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.2" opacity="0.9">
+        font-size="14" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.3" opacity="0.85">
     {display_author or "微信公众号"}
   </text>
 
-  <!-- 底部装饰短横线 -->
-  <line x1="{center_x - 35}" y1="278" x2="{center_x + 35}" y2="278" stroke="{c['accent']}" stroke-width="2.5" stroke-linecap="round" opacity="0.45" />
+  <!-- 底部横线 -->
+  <line x1="{center_x - 30}" y1="280" x2="{center_x + 30}" y2="280" stroke="{c['accent']}" stroke-width="2" stroke-linecap="round" opacity="0.40" />
 
-  <!-- 底部信息 -->
-  <text x="{center_x}" y="340"
+  <text x="{center_x}" y="338"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="12" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.3" opacity="0.75">
+        font-size="11" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.4" opacity="0.65">
     {display_sub if display_sub else "阅读更多"}
   </text>
 </svg>'''
