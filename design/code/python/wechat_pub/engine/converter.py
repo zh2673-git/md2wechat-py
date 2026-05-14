@@ -51,6 +51,11 @@ class Converter:
             # 1. 提取 frontmatter
             md_content, metadata = self._extract_frontmatter(md_content)
 
+            # 1.5 如果传入了 title，去掉正文中与 title 相同的首个 H2（防重复）
+            effective_title = req.title or metadata.get("title", "")
+            if effective_title:
+                md_content = self._strip_duplicate_title(md_content, effective_title)
+
             # 2. 渲染 :::block 为 HTML
             md_with_blocks = self._layout.render(md_content, theme=req.theme)
 
@@ -104,6 +109,29 @@ class Converter:
                 key, _, val = line.partition(":")
                 metadata[key.strip().lower()] = val.strip()
         return md[match.end():], metadata
+
+    # -----------------------------------------------------------
+    # 去重标题
+    # -----------------------------------------------------------
+    _H2_PATTERN = re.compile(r'^##\s+(.+)\s*$', re.MULTILINE)
+
+    def _strip_duplicate_title(self, md: str, title: str) -> str:
+        """如果正文首个 H2 与 title 相同，去掉该 H2 行（防微信标题重复显示）"""
+        match = self._H2_PATTERN.search(md)
+        if not match:
+            return md
+        h2_text = match.group(1).strip()
+        if h2_text == title.strip():
+            # 去掉该 H2 行及其后紧跟的空行
+            start = match.start()
+            end = match.end()
+            # 吃掉后面的空行
+            while end < len(md) and md[end] == '\n':
+                end += 1
+                if end - match.end() > 1:  # 最多吃1个空行
+                    break
+            return md[:start] + md[end:]
+        return md
 
     # -----------------------------------------------------------
     # 包装完整 HTML
