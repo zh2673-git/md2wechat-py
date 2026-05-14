@@ -275,79 +275,97 @@ class ImageEngine:
         return themes.get(theme, themes["claude-warm"])
 
     def _build_svg(self, title: str, subtitle: str, author: str, c: dict) -> str:
-        """构建 Claude 风格 SVG 封面（美观版）
+        """构建 Claude 风格 SVG 封面（中心布局，微信方形裁剪友好）
 
         设计语言：
-        - 大面积留白，信息密度低，呼吸感强
-        - 左侧 accent 色竖条作为视觉锚点（10px 宽）
-        - 标题左对齐，大字号 + 粗字重，留白充足
-        - 右下角几何装饰（三角+圆）提供视觉平衡
-        - 底部信息区用细线分隔，保持层次清晰
-        - 右上角带装饰性圆弧，增加结构感
+        - 微信列表页从 900x383 中心裁出 383x383 方形 → 核心视觉元素必须在 x:259-641 范围内
+        - 标题居中，大字号 + 粗字重，居中排列
+        - 大面积留白，呼吸感强
+        - 中心区域有装饰图案，方形裁剪下不单调
+        - 边缘装饰仅作为全尺寸展示时的补充
         """
         display_title = title[:32] + ("..." if len(title) > 32 else "")
         display_sub = subtitle[:50] + ("..." if len(subtitle) > 50 else "")
         display_author = author[:20] + ("..." if len(author) > 20 else "")
 
+        # 微信方形裁剪边界（近似）
+        crop_l, crop_r = 259, 641
+        center_x = (crop_l + crop_r) // 2  # 450
+
         return f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{self.WECHAT_COVER_W}" height="{self.WECHAT_COVER_H}" viewBox="0 0 {self.WECHAT_COVER_W} {self.WECHAT_COVER_H}">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:{c['bg']};stop-opacity:1" />
-      <stop offset="80%" style="stop-color:{c['bg']};stop-opacity:1" />
+      <stop offset="60%" style="stop-color:{c['bg']};stop-opacity:1" />
       <stop offset="100%" style="stop-color:{c['accent-light']};stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="80%" y2="0%">
+    <radialGradient id="centerGlow" cx="50%" cy="35%" r="35%">
+      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:0.06" />
+      <stop offset="50%" style="stop-color:{c['accent']};stop-opacity:0.03" />
+      <stop offset="100%" style="stop-color:{c['accent']};stop-opacity:0" />
+    </radialGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:{c['heading']};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:{c['heading']};stop-opacity:0.9" />
-    </linearGradient>
-    <linearGradient id="accGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:{c['accent']};stop-opacity:0.6" />
+      <stop offset="50%" style="stop-color:{c['heading']};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:{c['heading']};stop-opacity:0.85" />
     </linearGradient>
   </defs>
 
-  <!-- 主背景 -->
+  <!-- 主背景：从上到下的渐变 -->
   <rect width="100%" height="100%" fill="url(#bgGrad)" />
 
-  <!-- 左侧 accent 竖条（更宽，渐变） -->
-  <rect x="0" y="0" width="10" height="100%" fill="url(#accGrad)" />
+  <!-- 中央柔光：使中间区域有层次感  -->
+  <rect x="0" y="0" width="100%" height="100%" fill="url(#centerGlow)" />
 
-  <!-- 右上角装饰圆弧 -->
-  <path d="M 680,-30 Q 780,80 900,200" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.08" />
-  <path d="M 530,-30 Q 680,100 900,300" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.05" />
+  <!-- ===== 中心装饰图案（方形裁剪区域内可见） ===== -->
 
-  <!-- 右下角几何装饰：三角 + 圆 -->
-  <polygon points="900,383 900,230 750,383" fill="{c['accent']}" opacity="0.07" />
-  <circle cx="740" cy="295" r="65" fill="{c['warm']}" opacity="0.06" />
-  <circle cx="810" cy="340" r="25" fill="{c['accent']}" opacity="0.05" />
-  <circle cx="860" cy="365" r="8" fill="{c['warm']}" opacity="0.08" />
+  <!-- 中心位置的大圆（很淡，只提供纹理） -->
+  <circle cx="{center_x}" cy="175" r="120" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.06" />
+  <circle cx="{center_x}" cy="175" r="90" fill="none" stroke="{c['accent']}" stroke-width="0.8" opacity="0.04" />
+  <circle cx="{center_x}" cy="175" r="60" fill="none" stroke="{c['warm']}" stroke-width="0.6" opacity="0.05" />
 
-  <!-- 顶部装饰线 -->
-  <line x1="42" y1="38" x2="90" y2="38" stroke="{c['accent']}" stroke-width="3" stroke-linecap="round" />
+  <!-- 中心装饰小圆点 -->
+  <circle cx="{center_x}" cy="175" r="4" fill="{c['accent']}" opacity="0.12" />
 
-  <!-- 主标题（加宽左间距，更大字号） -->
-  <text x="42" y="142"
+  <!-- 上下方的装饰短线 -->
+  <line x1="{center_x - 50}" y1="60" x2="{center_x + 50}" y2="60" stroke="{c['accent']}" stroke-width="1.5" opacity="0.15" stroke-linecap="round" />
+  <line x1="{center_x - 30}" y1="67" x2="{center_x + 30}" y2="67" stroke="{c['accent']}" stroke-width="1" opacity="0.08" stroke-linecap="round" />
+  <line x1="{center_x - 50}" y1="315" x2="{center_x + 50}" y2="315" stroke="{c['accent']}" stroke-width="1.5" opacity="0.15" stroke-linecap="round" />
+  <line x1="{center_x - 30}" y1="308" x2="{center_x + 30}" y2="308" stroke="{c['accent']}" stroke-width="1" opacity="0.08" stroke-linecap="round" />
+
+  <!-- ===== 左右边缘装饰（全尺寸可见，方形裁剪时不可见） ===== -->
+
+  <!-- 左侧装饰弧线 -->
+  <path d="M -20,-20 Q 60,100 80,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.06" />
+  <path d="M 20,-20 Q 100,100 120,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.04" />
+
+  <!-- 右侧装饰弧线 -->
+  <path d="M 920,-20 Q 840,100 820,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.06" />
+  <path d="M 880,-20 Q 800,100 780,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.04" />
+
+  <!-- ===== 主标题（居中，方形裁剪内可见） ===== -->
+  <text x="{center_x}" y="145"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="36" font-weight="700" fill="url(#titleGrad)" letter-spacing="-0.5">
+        font-size="34" font-weight="700" fill="url(#titleGrad)" text-anchor="middle" letter-spacing="-0.3">
     {display_title}
   </text>
 
   <!-- 副标题 -->
-  <text x="44" y="195"
+  <text x="{center_x}" y="185"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="16" fill="{c['muted']}" letter-spacing="0.3" opacity="0.9">
-    {display_sub}
+        font-size="15" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.2" opacity="0.9">
+    {display_author or "微信公众号"}
   </text>
 
-  <!-- accent 短横线 -->
-  <line x1="42" y1="270" x2="120" y2="270" stroke="{c['accent']}" stroke-width="2.5" stroke-linecap="round" opacity="0.7" />
+  <!-- 底部装饰短横线 -->
+  <line x1="{center_x - 30}" y1="278" x2="{center_x + 30}" y2="278" stroke="{c['accent']}" stroke-width="2" stroke-linecap="round" opacity="0.3" />
 
-  <!-- 底部作者 + 品牌 -->
-  <text x="44" y="340"
+  <!-- 底部信息 -->
+  <text x="{center_x}" y="340"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="13" fill="{c['muted']}" letter-spacing="0.4" opacity="0.8">
-    {display_author or "微信公众号"}
+        font-size="12" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.3" opacity="0.6">
+    {display_sub if display_sub else "阅读更多"}
   </text>
 </svg>'''
 
