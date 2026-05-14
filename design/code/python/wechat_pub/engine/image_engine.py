@@ -301,8 +301,8 @@ class ImageEngine:
       <stop offset="100%" style="stop-color:{c['accent-light']};stop-opacity:1" />
     </linearGradient>
     <radialGradient id="centerGlow" cx="50%" cy="35%" r="35%">
-      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:0.06" />
-      <stop offset="50%" style="stop-color:{c['accent']};stop-opacity:0.03" />
+      <stop offset="0%" style="stop-color:{c['accent']};stop-opacity:0.12" />
+      <stop offset="40%" style="stop-color:{c['accent']};stop-opacity:0.06" />
       <stop offset="100%" style="stop-color:{c['accent']};stop-opacity:0" />
     </radialGradient>
     <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -320,29 +320,32 @@ class ImageEngine:
 
   <!-- ===== 中心装饰图案（方形裁剪区域内可见） ===== -->
 
-  <!-- 中心位置的大圆（很淡，只提供纹理） -->
-  <circle cx="{center_x}" cy="175" r="120" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.06" />
-  <circle cx="{center_x}" cy="175" r="90" fill="none" stroke="{c['accent']}" stroke-width="0.8" opacity="0.04" />
-  <circle cx="{center_x}" cy="175" r="60" fill="none" stroke="{c['warm']}" stroke-width="0.6" opacity="0.05" />
+  <!-- 中心位置的大圆（加深纹路） -->
+  <circle cx="{center_x}" cy="175" r="120" fill="none" stroke="{c['accent']}" stroke-width="1.2" opacity="0.15" />
+  <circle cx="{center_x}" cy="175" r="90" fill="none" stroke="{c['accent']}" stroke-width="1" opacity="0.12" />
+  <circle cx="{center_x}" cy="175" r="60" fill="none" stroke="{c['warm']}" stroke-width="0.8" opacity="0.13" />
+  <!-- 额外装饰圆环 -->
+  <circle cx="{center_x}" cy="175" r="150" fill="none" stroke="{c['accent']}" stroke-width="0.8" opacity="0.08" />
+  <circle cx="{center_x}" cy="175" r="40" fill="none" stroke="{c['accent']}" stroke-width="0.6" opacity="0.10" />
 
   <!-- 中心装饰小圆点 -->
-  <circle cx="{center_x}" cy="175" r="4" fill="{c['accent']}" opacity="0.12" />
+  <circle cx="{center_x}" cy="175" r="4" fill="{c['accent']}" opacity="0.25" />
 
   <!-- 上下方的装饰短线 -->
-  <line x1="{center_x - 50}" y1="60" x2="{center_x + 50}" y2="60" stroke="{c['accent']}" stroke-width="1.5" opacity="0.15" stroke-linecap="round" />
-  <line x1="{center_x - 30}" y1="67" x2="{center_x + 30}" y2="67" stroke="{c['accent']}" stroke-width="1" opacity="0.08" stroke-linecap="round" />
-  <line x1="{center_x - 50}" y1="315" x2="{center_x + 50}" y2="315" stroke="{c['accent']}" stroke-width="1.5" opacity="0.15" stroke-linecap="round" />
-  <line x1="{center_x - 30}" y1="308" x2="{center_x + 30}" y2="308" stroke="{c['accent']}" stroke-width="1" opacity="0.08" stroke-linecap="round" />
+  <line x1="{center_x - 50}" y1="60" x2="{center_x + 50}" y2="60" stroke="{c['accent']}" stroke-width="1.5" opacity="0.30" stroke-linecap="round" />
+  <line x1="{center_x - 30}" y1="67" x2="{center_x + 30}" y2="67" stroke="{c['accent']}" stroke-width="1" opacity="0.18" stroke-linecap="round" />
+  <line x1="{center_x - 50}" y1="315" x2="{center_x + 50}" y2="315" stroke="{c['accent']}" stroke-width="1.5" opacity="0.30" stroke-linecap="round" />
+  <line x1="{center_x - 30}" y1="308" x2="{center_x + 30}" y2="308" stroke="{c['accent']}" stroke-width="1" opacity="0.18" stroke-linecap="round" />
 
   <!-- ===== 左右边缘装饰（全尺寸可见，方形裁剪时不可见） ===== -->
 
   <!-- 左侧装饰弧线 -->
-  <path d="M -20,-20 Q 60,100 80,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.06" />
-  <path d="M 20,-20 Q 100,100 120,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.04" />
+  <path d="M -20,-20 Q 60,100 80,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.12" />
+  <path d="M 20,-20 Q 100,100 120,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.08" />
 
   <!-- 右侧装饰弧线 -->
-  <path d="M 920,-20 Q 840,100 820,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.06" />
-  <path d="M 880,-20 Q 800,100 780,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.04" />
+  <path d="M 920,-20 Q 840,100 820,383" fill="none" stroke="{c['accent']}" stroke-width="2" opacity="0.12" />
+  <path d="M 880,-20 Q 800,100 780,383" fill="none" stroke="{c['accent']}" stroke-width="1.5" opacity="0.08" />
 
   <!-- ===== 主标题（居中，方形裁剪内可见） ===== -->
   <text x="{center_x}" y="145"
@@ -359,12 +362,12 @@ class ImageEngine:
   </text>
 
   <!-- 底部装饰短横线 -->
-  <line x1="{center_x - 30}" y1="278" x2="{center_x + 30}" y2="278" stroke="{c['accent']}" stroke-width="2" stroke-linecap="round" opacity="0.3" />
+  <line x1="{center_x - 35}" y1="278" x2="{center_x + 35}" y2="278" stroke="{c['accent']}" stroke-width="2.5" stroke-linecap="round" opacity="0.45" />
 
   <!-- 底部信息 -->
   <text x="{center_x}" y="340"
         font-family="-apple-system,BlinkMacSystemFont,PingFang SC,Noto Sans SC,Microsoft YaHei,sans-serif"
-        font-size="12" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.3" opacity="0.6">
+        font-size="12" fill="{c['muted']}" text-anchor="middle" letter-spacing="0.3" opacity="0.75">
     {display_sub if display_sub else "阅读更多"}
   </text>
 </svg>'''
