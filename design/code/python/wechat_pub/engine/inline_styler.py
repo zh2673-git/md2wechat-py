@@ -18,28 +18,27 @@ class InlineStyler:
                 "max-width:680px;margin:0 auto;padding:24px 16px;"
                 "background:#FAF7F2;"
                 "font-family:-apple-system,BlinkMacSystemFont,"
-                '"PingFang SC","Noto Sans SC","Helvetica Neue",sans-serif;'
-                "font-size:16px;line-height:1.8;letter-spacing:0.01em;color:#3D3A36;"
+                '"PingFang SC","Noto Sans SC",sans-serif;'
+                "font-size:16px;line-height:1.8;color:#3D3A36;"
             ),
-            "h1": "font-size:22px;font-weight:700;color:#1F1D1A;margin:36px 0 16px;line-height:1.4;",
-            "h2": "font-size:19px;font-weight:600;color:#1F1D1A;margin:36px 0 16px;line-height:1.45;padding-bottom:8px;border-bottom:1px solid #E8E2DA;",
-            "h3": "font-size:17px;font-weight:600;color:#1F1D1A;margin:20px 0 12px;line-height:1.5;",
-            "h4": "font-size:16px;font-weight:600;color:#1F1D1A;margin:16px 0 8px;",
-            "p": "margin:0 0 16px;color:#3D3A36;line-height:1.8;",
-            "blockquote": "border-left:3px solid #C96442;background:#FEFCF9;margin:28px 0;padding:16px 20px;border-radius:0 10px 10px 0;color:#1F1D1A;",
-            "ul": "margin:16px 0;padding-left:24px;color:#3D3A36;",
-            "ol": "margin:16px 0;padding-left:24px;color:#3D3A36;",
-            "li": "margin:8px 0;line-height:1.8;",
-            "strong": "font-weight:600;color:#1F1D1A;",
-            "em": "font-style:italic;color:#8C8278;",
-            "a": "color:#C96442;text-decoration:none;border-bottom:1px solid #F5E6DC;",
+            "h1": "font-size:22px;font-weight:700;color:#1F1D1A;margin:36px 0 16px;",
+            "h2": "font-size:19px;font-weight:600;color:#1F1D1A;margin:36px 0 16px;padding-bottom:8px;border-bottom:1px solid #E8E2DA;",
+            "h3": "font-size:17px;font-weight:600;color:#1F1D1A;margin:20px 0 12px;",
+            "p": "margin:0 0 16px;",
+            "blockquote": "border-left:3px solid #C96442;background:#FEFCF9;margin:28px 0;padding:16px 20px;border-radius:0 10px 10px 0;",
+            "ul": "margin:16px 0;padding-left:24px;",
+            "ol": "margin:16px 0;padding-left:24px;",
+            "li": "margin:8px 0;",
+            "strong": "font-weight:600;",
+            "em": "font-style:italic;",
+            "a": "color:#C96442;text-decoration:none;",
             "hr": "border:none;border-top:1px solid #E8E2DA;margin:36px 0;",
             "code": "background:#2D2A26;color:#E8E2DA;padding:2px 6px;border-radius:4px;font-size:0.9em;",
             "pre": "background:#2D2A26;color:#E8E2DA;padding:16px 20px;border-radius:10px;overflow-x:auto;margin:28px 0;",
             "img": "max-width:100%;height:auto;border-radius:6px;margin:12px 0;",
-            "table": "width:100%;border-collapse:collapse;margin:20px 0;font-size:15px;",
-            "th": "background:#F5E6DC;color:#1F1D1A;font-weight:600;padding:10px 14px;border:1px solid #E8E2DA;text-align:left;",
-            "td": "padding:10px 14px;border:1px solid #E8E2DA;color:#3D3A36;",
+            "table": "width:100%;border-collapse:collapse;margin:20px 0;",
+            "th": "background:#F5E6DC;font-weight:600;padding:10px 14px;border:1px solid #E8E2DA;",
+            "td": "padding:10px 14px;border:1px solid #E8E2DA;",
         },
         "claude-clean": {
             "_root": (

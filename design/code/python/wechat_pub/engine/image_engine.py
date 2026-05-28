@@ -470,20 +470,21 @@ class ImageEngine:
                 optimize=True,
             )
 
-            try:
-                from PIL import GifImagePlugin
-                with Image.open(output_path) as img:
-                    img = img.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
-                    img.save(
-                        output_path,
-                        format="GIF",
-                        save_all=True,
-                        duration=frame_interval_ms,
-                        loop=0,
-                        optimize=True,
-                    )
-            except Exception:
-                pass
+            # 颜色量化：对每一帧单独量化，保留多帧
+            quantized_frames = []
+            for frame in frames:
+                q = frame.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
+                quantized_frames.append(q)
+
+            quantized_frames[0].save(
+                output_path,
+                format="GIF",
+                save_all=True,
+                append_images=quantized_frames[1:],
+                duration=frame_interval_ms,
+                loop=0,
+                optimize=True,
+            )
 
             file_size_kb = Path(output_path).stat().st_size / 1024
             if file_size_kb > self.GIF_MAX_SIZE_KB:
