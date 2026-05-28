@@ -1,8 +1,11 @@
-"""图片引擎：封面生成 + 占位图 + 微信上传集成"""
+"""图片引擎：封面生成 + 占位图 + Canvas动画录制GIF + 微信上传集成"""
 import hashlib
 import struct
+import tempfile
 from pathlib import Path
 from dataclasses import dataclass
+
+from ..models import GifResult
 
 
 @dataclass
@@ -21,12 +24,18 @@ class ImageEngine:
     功能：
     1. 生成 Claude 风格 SVG 封面（无需外部依赖）
     2. 生成 PNG 占位封面（纯 Python，无 Pillow 依赖）
-    3. 如果 Agent 已生成图片，直接使用
+    3. Canvas 动画录制为 GIF（Playwright + Pillow）
+    4. 如果 Agent 已生成图片，直接使用
     """
 
-    # 微信公众号封面推荐尺寸：900 x 383 (2.35:1)
     WECHAT_COVER_W = 900
     WECHAT_COVER_H = 383
+
+    GIF_MAX_WIDTH = 600
+    GIF_MAX_DURATION_S = 8
+    GIF_DEFAULT_FPS = 10
+    GIF_MAX_COLORS = 128
+    GIF_MAX_SIZE_KB = 2048
 
     def generate_cover(
         self,
@@ -339,6 +348,192 @@ class ImageEngine:
             return CoverResult(success=True, file_path=output_path, width=w, height=h)
         except Exception as e:
             return CoverResult(success=False, error=str(e))
+
+    def record_canvas_to_gif(
+        self,
+        html_path: str = "",
+        html_content: str = "",
+        output_path: str = "",
+        width: int = 600,
+        height: int = 400,
+        fps: int = 10,
+        duration_s: float = 5.0,
+        colors: int = 128,
+        selector: str = "canvas",
+        wait_ms: int = 500,
+        scale: float = 1.0,
+    ) -> GifResult:
+        """将 Canvas 动画 HTML 录制为 GIF
+
+        使用 Playwright 打开 HTML，逐帧截图 Canvas 元素，用 Pillow 合成 GIF。
+
+        Args:
+            html_path: HTML 文件路径（与 html_content 二选一）
+            html_content: HTML 内容字符串（与 html_path 二选一）
+            output_path: 输出 GIF 路径（空则自动生成）
+            width: 浏览器视口宽度
+            height: 浏览器视口高度
+            fps: 帧率（8-12 推荐）
+            duration_s: 录制时长（秒，最长 8s）
+            colors: GIF 颜色数（64-256，越小文件越小）
+            selector: Canvas 元素 CSS 选择器
+            wait_ms: 页面加载后等待时间（毫秒）
+            scale: 设备像素比（1.0=1x, 2.0=2x 高清）
+
+        Returns:
+            GifResult
+        """
+        try:
+            from PIL import Image
+        except ImportError:
+            return GifResult(
+                success=False,
+                error="Pillow 未安装，请运行: pip install Pillow",
+            )
+
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            return GifResult(
+                success=False,
+                error="Playwright 未安装，请运行: pip install playwright && playwright install chromium",
+            )
+
+        try:
+            fps = max(4, min(15, fps))
+            duration_s = max(1.0, min(self.GIF_MAX_DURATION_S, duration_s))
+            width = min(width, self.GIF_MAX_WIDTH)
+            colors = max(32, min(256, colors))
+
+            if not output_path:
+                output_dir = Path.cwd() / "output" / "images"
+                output_dir.mkdir(parents=True, exist_ok=True)
+                output_path = str(output_dir / "animation.gif")
+
+            frame_interval_ms = int(1000 / fps)
+            total_frames = int(duration_s * fps)
+
+            tmp_html = None
+            if html_content and not html_path:
+                tmp_html = Path(tempfile.mktemp(suffix=".html"))
+                tmp_html.write_text(html_content, encoding="utf-8")
+                html_path = str(tmp_html)
+
+            if not html_path:
+                return GifResult(success=False, error="必须提供 html_path 或 html_content")
+
+            html_file_url = "file:///" + Path(html_path).resolve().as_posix()
+
+            frames = []
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page(
+                    viewport={"width": width, "height": height},
+                    device_scale_factor=scale,
+                )
+                page.goto(html_file_url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(wait_ms)
+
+                canvas_el = page.query_selector(selector)
+                use_canvas = canvas_el is not None
+
+                for i in range(total_frames):
+                    if use_canvas:
+                        screenshot_bytes = canvas_el.screenshot(type="png")
+                    else:
+                        screenshot_bytes = page.screenshot(type="png", full_page=False)
+
+                    import io
+                    frame = Image.open(io.BytesIO(screenshot_bytes)).convert("RGB")
+                    frames.append(frame)
+
+                    page.wait_for_timeout(frame_interval_ms)
+
+                browser.close()
+
+            if tmp_html:
+                try:
+                    tmp_html.unlink(missing_ok=True)
+                except Exception:
+                    pass
+
+            if not frames:
+                return GifResult(success=False, error="未捕获到任何帧")
+
+            frames[0].save(
+                output_path,
+                format="GIF",
+                save_all=True,
+                append_images=frames[1:],
+                duration=frame_interval_ms,
+                loop=0,
+                optimize=True,
+            )
+
+            try:
+                from PIL import GifImagePlugin
+                with Image.open(output_path) as img:
+                    img = img.quantize(colors=colors, method=Image.Quantize.MEDIANCUT)
+                    img.save(
+                        output_path,
+                        format="GIF",
+                        save_all=True,
+                        duration=frame_interval_ms,
+                        loop=0,
+                        optimize=True,
+                    )
+            except Exception:
+                pass
+
+            file_size_kb = Path(output_path).stat().st_size / 1024
+            if file_size_kb > self.GIF_MAX_SIZE_KB:
+                self._reduce_gif_quality(output_path, frames, frame_interval_ms, colors)
+
+            file_size_kb = Path(output_path).stat().st_size / 1024
+            actual_w, actual_h = frames[0].size
+
+            return GifResult(
+                success=True,
+                file_path=output_path,
+                width=actual_w,
+                height=actual_h,
+                frame_count=len(frames),
+                duration_ms=int(duration_s * 1000),
+                file_size_kb=round(file_size_kb, 1),
+            )
+
+        except Exception as e:
+            return GifResult(success=False, error=str(e))
+
+    def _reduce_gif_quality(
+        self,
+        output_path: str,
+        frames: list,
+        frame_interval_ms: int,
+        max_colors: int,
+    ) -> None:
+        """GIF 超过大小限制时，通过降采样帧和缩小尺寸来减小体积"""
+        from PIL import Image
+
+        step = 2
+        reduced = frames[::step]
+        if len(reduced) < 4:
+            reduced = frames
+
+        w, h = reduced[0].size
+        new_w = int(w * 0.75)
+        new_h = int(h * 0.75)
+        reduced = [f.resize((new_w, new_h), Image.LANCZOS) for f in reduced]
+
+        reduced[0].save(
+            output_path,
+            format="GIF",
+            save_all=True,
+            append_images=reduced[1:],
+            duration=frame_interval_ms * step,
+            loop=0,
+            optimize=True,
+        )
 
     # ── 私有方法 ────────────────────────────────────────────
 

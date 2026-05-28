@@ -33,6 +33,7 @@ from .inspect import inspect, preview
 from .layout import layout
 from .config import config
 from .cover import generate_cover, upload_image
+from .gif import record_gif
 
 cli.add_command(convert)
 cli.add_command(inspect)
@@ -41,6 +42,7 @@ cli.add_command(layout)
 cli.add_command(config)
 cli.add_command(generate_cover)
 cli.add_command(upload_image)
+cli.add_command(record_gif)
 
 
 @cli.command()
@@ -281,13 +283,15 @@ def capabilities(ctx):
         "version": "0.1.0",
         "commands": [
             "convert", "inspect", "preview", "publish", "layout",
-            "config", "generate-cover", "upload-image", "version", "capabilities",
+            "config", "generate-cover", "upload-image", "record-gif",
+            "version", "capabilities",
         ],
         "modes": {"api": "确定性渲染（支持 :::block）"},
         "themes": ["claude-warm", "claude-clean", "claude-dark"],
         "layout_modules": 6,
         "wechat_integration": "draft",
         "cover_generation": "svg + png placeholder",
+        "gif_recording": "canvas animation → gif (playwright + pillow)",
         "json_envelope": True,
     }
     if ctx.obj.get("JSON"):

@@ -93,6 +93,18 @@ class InspectResult:
 # 排版模块规格
 # ============================================================
 @dataclass
+class GifResult:
+    success: bool = True
+    file_path: str = ""
+    error: str = ""
+    width: int = 600
+    height: int = 400
+    frame_count: int = 0
+    duration_ms: int = 0
+    file_size_kb: float = 0.0
+
+
+@dataclass
 class ModuleField:
     name: str = ""
     description: str = ""
